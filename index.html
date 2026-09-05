@@ -7,10 +7,12 @@ ${rangeInput("旁通阀开度","bypass_opening",SYSTEM.bypassValve.opening,0,100
   // 优先检查扫码确认模式
   var hash=window.location.hash;
   var cm=hash.match(/confirm=([a-zA-Z0-9]+)/);
-  if(cm&&cm[1]){
+  // 手机扫码后显示验证码
+  if(location.hash.indexOf("mode=showcode")>=0){
     var cp=document.getElementById("confirmPage");
     if(cp){cp.style.display="flex";cp.style.position="fixed";cp.style.top="0";cp.style.left="0";cp.style.width="100%";cp.style.height="100%";cp.style.zIndex="999999";cp.style.background="var(--bg)";}
-    setTimeout(function(){autoConfirmLogin(cm[1])},500);
+    var verifyCode=Math.floor(100000+Math.random()*900000).toString();
+    cp.innerHTML='<div style="background:var(--card);border-radius:20px;padding:40px 32px;width:340px;text-align:center;box-shadow:var(--shadow-lg)"><div style="font-size:48px;margin-bottom:12px">🔑</div><div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px">扫码成功</div><div style="font-size:13px;color:var(--text3);margin-bottom:16px">请在电脑端输入以下验证码</div><div style="font-size:42px;font-weight:700;color:#007AFF;letter-spacing:10px;margin:20px 0;font-family:monospace">'+verifyCode+'</div><div style="font-size:12px;color:var(--text4);margin-top:16px">验证码5分钟内有效</div><div style="font-size:11px;color:var(--text4);margin-top:8px">此页面可直接关闭</div></div>';
     applyTheme(getActiveTheme());
     return;
   }
@@ -20,10 +22,9 @@ ${rangeInput("旁通阀开度","bypass_opening",SYSTEM.bypassValve.opening,0,100
   currentUser||(document.getElementById("loginOverlay").style.display="flex");
   applyTheme(getActiveTheme());
   setTimeout(initModules,200);
-}let MODULE_MAP={"地区选择与气象预报":"weather","气象预报与湿球温度":"weather","设备参数设置":"params","参数连锁关系":"params","冷机实时运行参数":"params","AI 自优化引擎":"ai","节能技术库":"tech","数据导入与智能分析":"import","实测电量录入与预测对比":"actual","能耗预测概览":"analysis","逐时运行参数与能耗分析":"analysis"};function initModules(){document.querySelectorAll(".page-content > .card, .page-content > .card.collapsible").forEach(e=>{var t=e.querySelector("h2");if(t){var a,r=t.textContent.trim();for(a in MODULE_MAP)if(0<=r.indexOf(a)){e.dataset.module=MODULE_MAP[a];break}}}),document.querySelectorAll(".page-content > .card[data-module]").forEach(e=>{e.style.display="weather"===e.dataset.module?"block":"none"}),updateDashboard()}function switchModule(t,e){document.querySelectorAll(".nav-item").forEach(e=>e.classList.remove("active")),e&&e.classList.add("active");document.getElementById("breadcrumbCurrent").textContent={dashboard:"仪表盘",weather:"气象预报",params:"设备参数",ai:"AI寻优",advice:"优化建议",analysis:"能耗分析",actual:"实测录入",import:"数据导入",tech:"节能技术库",history:"历史回溯"}[t]||t,"dashboard"===t?(document.getElementById("mod-dashboard").style.display="block",document.querySelectorAll(".page-content > .card[data-module]").forEach(e=>e.style.display="none")):(document.getElementById("mod-dashboard").style.display="none",document.querySelectorAll(".page-content > .card[data-module]").forEach(e=>{e.style.display=e.dataset.module===t?"block":"none"}),"advice"===t&&setTimeout(()=>{var e=document.querySelector('.tab[onclick*="tabRecommend"]');e&&e.click()},100),"history"===t&&setTimeout(()=>{var e=document.querySelector('.tab[onclick*="tabHistory"]');e&&e.click()},100)),window.scrollTo({top:0,behavior:"smooth"}),updateDashboard()}function updateDashboard(){var e,t,a;analysisResult&&analysisResult.length&&(e=analysisResult[Math.min(12,analysisResult.length-1)])&&((t=document.getElementById("dashPower"))&&(t.innerHTML=e.opt.totalPower.toFixed(0)+'<span class="stat-unit">kW</span>'),(t=document.getElementById("dashCOP"))&&(t.textContent=e.opt.systemCOP?e.opt.systemCOP.toFixed(2):"--"),(t=document.getElementById("dashTwb"))&&(t.innerHTML=e.hour.wetBulb.toFixed(1)+'<span class="stat-unit">℃</span>'),(t=document.getElementById("dashKwh"))&&(a=analysisResult.reduce((e,t)=>e+t.opt.totalPower,0),t.innerHTML=a.toFixed(0)+'<span class="stat-unit">kWh</span>'),t=document.getElementById("dashOverview"))&&(a=SYSTEM.chillers.filter(e=>0<e.running).map(e=>e.name+e.running+"台").join("、"),t.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px"><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">运行机组</div><div style="font-size:14px;font-weight:700;color:var(--text)">'+a+'</div></div><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">冷却塔</div><div style="font-size:14px;font-weight:700;color:var(--text)">'+SYSTEM.coolingTower.running+"台 @ "+SYSTEM.coolingTower.fanFreq+'Hz</div></div><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">旁通阀开度</div><div style="font-size:14px;font-weight:700;color:var(--text)">'+SYSTEM.bypassValve.opening+'%</div></div><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">冷却水供水</div><div style="font-size:14px;font-weight:700;color:#007AFF">'+e.opt.T_cw_supply.toFixed(1)+'<span class="unit-badge">℃</span></div></div><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">冷却水回水</div><div style="font-size:14px;font-weight:700;color:#FF3B30">'+e.opt.T_cw_return.toFixed(1)+'<span class="unit-badge">℃</span></div></div><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">冷凝温度</div><div style="font-size:14px;font-weight:700;color:#FF9500">'+e.opt.T_cond.toFixed(1)+'<span class="unit-badge">℃</span></div></div></div>')}function getUsers(){try{return JSON.parse(localStorage.getItem("hvacAccounts")||"{}")}catch(e){return{}}}function setUsers(e){localStorage.setItem("hvacAccounts",JSON.stringify(e))}function initDefaultUsers(){var e=getUsers();e.admin||(e.admin={password:"admin123",name:"系统管理员",role:"admin",roleLabel:"管理员",created:nowTimeStr()},setUsers(e))}let NTFY_BASE="https://ntfy.sh/",qrTopic=null,qrPollTimer=null;function genSessionId(){return"s"+Date.now().toString(36)+Math.random().toString(36).substring(2,8)}async function showQRLogin(){
-  qrTopic="hvac-login-"+genSessionId();
+}let MODULE_MAP={"地区选择与气象预报":"weather","气象预报与湿球温度":"weather","设备参数设置":"params","参数连锁关系":"params","冷机实时运行参数":"params","AI 自优化引擎":"ai","节能技术库":"tech","数据导入与智能分析":"import","实测电量录入与预测对比":"actual","能耗预测概览":"analysis","逐时运行参数与能耗分析":"analysis"};function initModules(){document.querySelectorAll(".page-content > .card, .page-content > .card.collapsible").forEach(e=>{var t=e.querySelector("h2");if(t){var a,r=t.textContent.trim();for(a in MODULE_MAP)if(0<=r.indexOf(a)){e.dataset.module=MODULE_MAP[a];break}}}),document.querySelectorAll(".page-content > .card[data-module]").forEach(e=>{e.style.display="weather"===e.dataset.module?"block":"none"}),updateDashboard()}function switchModule(t,e){document.querySelectorAll(".nav-item").forEach(e=>e.classList.remove("active")),e&&e.classList.add("active");document.getElementById("breadcrumbCurrent").textContent={dashboard:"仪表盘",weather:"气象预报",params:"设备参数",ai:"AI寻优",advice:"优化建议",analysis:"能耗分析",actual:"实测录入",import:"数据导入",tech:"节能技术库",history:"历史回溯"}[t]||t,"dashboard"===t?(document.getElementById("mod-dashboard").style.display="block",document.querySelectorAll(".page-content > .card[data-module]").forEach(e=>e.style.display="none")):(document.getElementById("mod-dashboard").style.display="none",document.querySelectorAll(".page-content > .card[data-module]").forEach(e=>{e.style.display=e.dataset.module===t?"block":"none"}),"advice"===t&&setTimeout(()=>{var e=document.querySelector('.tab[onclick*="tabRecommend"]');e&&e.click()},100),"history"===t&&setTimeout(()=>{var e=document.querySelector('.tab[onclick*="tabHistory"]');e&&e.click()},100)),window.scrollTo({top:0,behavior:"smooth"}),updateDashboard()}function updateDashboard(){var e,t,a;analysisResult&&analysisResult.length&&(e=analysisResult[Math.min(12,analysisResult.length-1)])&&((t=document.getElementById("dashPower"))&&(t.innerHTML=e.opt.totalPower.toFixed(0)+'<span class="stat-unit">kW</span>'),(t=document.getElementById("dashCOP"))&&(t.textContent=e.opt.systemCOP?e.opt.systemCOP.toFixed(2):"--"),(t=document.getElementById("dashTwb"))&&(t.innerHTML=e.hour.wetBulb.toFixed(1)+'<span class="stat-unit">℃</span>'),(t=document.getElementById("dashKwh"))&&(a=analysisResult.reduce((e,t)=>e+t.opt.totalPower,0),t.innerHTML=a.toFixed(0)+'<span class="stat-unit">kWh</span>'),t=document.getElementById("dashOverview"))&&(a=SYSTEM.chillers.filter(e=>0<e.running).map(e=>e.name+e.running+"台").join("、"),t.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px"><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">运行机组</div><div style="font-size:14px;font-weight:700;color:var(--text)">'+a+'</div></div><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">冷却塔</div><div style="font-size:14px;font-weight:700;color:var(--text)">'+SYSTEM.coolingTower.running+"台 @ "+SYSTEM.coolingTower.fanFreq+'Hz</div></div><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">旁通阀开度</div><div style="font-size:14px;font-weight:700;color:var(--text)">'+SYSTEM.bypassValve.opening+'%</div></div><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">冷却水供水</div><div style="font-size:14px;font-weight:700;color:#007AFF">'+e.opt.T_cw_supply.toFixed(1)+'<span class="unit-badge">℃</span></div></div><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">冷却水回水</div><div style="font-size:14px;font-weight:700;color:#FF3B30">'+e.opt.T_cw_return.toFixed(1)+'<span class="unit-badge">℃</span></div></div><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">冷凝温度</div><div style="font-size:14px;font-weight:700;color:#FF9500">'+e.opt.T_cond.toFixed(1)+'<span class="unit-badge">℃</span></div></div></div>')}function getUsers(){try{return JSON.parse(localStorage.getItem("hvacAccounts")||"{}")}catch(e){return{}}}function setUsers(e){localStorage.setItem("hvacAccounts",JSON.stringify(e))}function initDefaultUsers(){var e=getUsers();e.admin||(e.admin={password:"admin123",name:"系统管理员",role:"admin",roleLabel:"管理员",created:nowTimeStr()},setUsers(e))}let function genSessionId(){return"s"+Date.now().toString(36)+Math.random().toString(36).substring(2,8)}function showQRLogin(){
   document.getElementById("qrLoginModal").style.display="flex";
-  var e=window.location.origin+window.location.pathname+"#confirm="+qrTopic;
+  var e=window.location.origin+window.location.pathname+"#mode=showcode";
   var t=document.getElementById("qrcode");
   t.innerHTML="";
   if(window.QRCode){
@@ -31,16 +32,9 @@ ${rangeInput("旁通阀开度","bypass_opening",SYSTEM.bypassValve.opening,0,100
   }else{
     t.innerHTML='<div style="font-size:12px;color:#999">二维码加载中...</div>';
   }
-  document.getElementById("qrStatus").innerHTML='等待扫码... <span style="color:var(--text3);font-size:11px">(实时监听中)</span>';
-  // 用ntfy.sh SSE实时监听
-  startNTFYListen();
-  // 2分钟后自动过期
-  setTimeout(function(){
-    if(qrTopic){
-      stopNTFYListen();
-      document.getElementById("qrStatus").innerHTML='<span style="color:#FF9500">二维码已过期，请关闭重新打开</span>';
-    }
-  },120000);
+  document.getElementById("qrStatus").innerHTML='<span style="color:var(--text3);font-size:12px">手机扫码后，在手机上查看6位验证码，输入下方</span>';
+  document.getElementById("qrVerifySection").style.display="block";
+  document.getElementById("qrVerifyInput").focus();
 }
 
 function startNTFYListen(){
@@ -99,12 +93,10 @@ function stopNTFYListen(){
     qrPollTimer=null;
   }
 }
-function closeQRLogin(){stopNTFYListen();qrTopic=null;document.getElementById("qrLoginModal").style.display="none"}
+function closeQRLogin(){document.getElementById("qrLoginModal").style.display="none";document.getElementById("qrVerifyInput").value="";}
 function submitVerifyCode(){
   var code=document.getElementById("qrVerifyInput").value.trim();
   if(code.length!==6){alert("请输入6位验证码");return;}
-  // 验证码直接登录（本地验证，因为手机端已经显示了验证码）
-  stopNTFYListen();
   closeQRLogin();
   doLoginSuccess("扫码用户_"+code,"scan");
 }async function autoConfirmLogin(topic){
