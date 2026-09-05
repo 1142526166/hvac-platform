@@ -84,7 +84,8 @@ function stopNTFYListen(){
     try{qrAbortController.abort();}catch(e){}
     qrAbortController=null;
   }
-}// 已改用NTFY SSE实时监听，无需轮询function closeQRLogin(){stopNTFYListen();qrTopic=null;document.getElementById("qrLoginModal").style.display="none"}async function autoConfirmLogin(topic){
+}
+function closeQRLogin(){stopNTFYListen();qrTopic=null;document.getElementById("qrLoginModal").style.display="none"}async function autoConfirmLogin(topic){
   if(!topic){
     document.getElementById("confirmMsg").innerHTML='<div style="color:#FF3B30">无效的会话</div>';
     return;
