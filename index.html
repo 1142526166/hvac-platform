@@ -52,14 +52,16 @@ function startNTFYListen(){
 async function pollNTFY(){
   if(!qrTopic)return;
   try{
-    var resp=await fetch(NTFY_BASE+qrTopic+"/json?poll=1&since=all",{cache:"no-store"});
+    var resp=await fetch(NTFY_BASE+qrTopic+"/json?poll=0&since=all",{cache:"no-store"});
     var text=await resp.text();
     var lines=text.split("\n").filter(function(l){return l.trim();});
+    var got=false;
     for(var i=0;i<lines.length;i++){
       try{
         var msg=JSON.parse(lines[i]);
         if(msg.event==="message"&&msg.message&&msg.message.startsWith("confirmed:")){
           var user=msg.message.substring(10);
+          got=true;
           stopNTFYListen();
           closeQRLogin();
           doLoginSuccess(user,"scan");
@@ -67,7 +69,15 @@ async function pollNTFY(){
         }
       }catch(e){}
     }
-  }catch(e){}
+    // 显示轮询状态
+    var statusEl=document.getElementById("qrStatus");
+    if(statusEl&&!got){
+      statusEl.innerHTML='等待扫码... <span style="color:var(--text3);font-size:11px">(监听中 '+lines.length+'条)</span>';
+    }
+  }catch(e){
+    var statusEl=document.getElementById("qrStatus");
+    if(statusEl)statusEl.innerHTML='等待扫码... <span style="color:#FF9500;font-size:11px">(网络重试中)</span>';
+  }
 }
 
 function stopNTFYListen(){
@@ -82,15 +92,17 @@ function closeQRLogin(){stopNTFYListen();qrTopic=null;document.getElementById("q
     return;
   }
   var cp=document.getElementById("confirmPage");
-  cp.innerHTML='<div style="background:var(--card);border-radius:20px;padding:40px 32px;width:340px;text-align:center;box-shadow:var(--shadow-lg)"><div style="font-size:48px;margin-bottom:12px">⏳</div><div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px">正在确认登录</div><div style="font-size:13px;color:var(--text3)">请稍候...</div></div>';
+  cp.innerHTML='<div style="background:var(--card);border-radius:20px;padding:40px 32px;width:340px;text-align:center;box-shadow:var(--shadow-lg)"><div style="font-size:48px;margin-bottom:12px">⏳</div><div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px">正在确认登录</div><div id="confirmSubMsg" style="font-size:13px;color:var(--text3)">正在发送确认...</div></div>';
   var user="扫码用户_"+Date.now().toString(36);
   var ok=false;
-  for(var i=0;i<3&&!ok;i++){
+  var subMsg=document.getElementById("confirmSubMsg");
+  for(var i=0;i<5&&!ok;i++){
     try{
-      await fetch(NTFY_BASE+topic,{method:"POST",body:"confirmed:"+user});
+      if(subMsg)subMsg.textContent="正在发送确认... (第"+(i+1)+"次)";
+      await fetch(NTFY_BASE+topic,{method:"POST",body:"confirmed:"+user,mode:"cors"});
       ok=true;
     }catch(a){
-      await new Promise(function(r){setTimeout(r,600)});
+      await new Promise(function(r){setTimeout(r,800)});
     }
   }
   if(ok){
