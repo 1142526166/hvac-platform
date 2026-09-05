@@ -21,7 +21,31 @@ ${rangeInput("旁通阀开度","bypass_opening",SYSTEM.bypassValve.opening,0,100
   currentUser||(document.getElementById("loginOverlay").style.display="flex");
   applyTheme(getActiveTheme());
   setTimeout(initModules,200);
-}let MODULE_MAP={"地区选择与气象预报":"weather","气象预报与湿球温度":"weather","设备参数设置":"params","参数连锁关系":"params","冷机实时运行参数":"params","AI 自优化引擎":"ai","节能技术库":"tech","数据导入与智能分析":"import","实测电量录入与预测对比":"actual","能耗预测概览":"analysis","逐时运行参数与能耗分析":"analysis"};function initModules(){document.querySelectorAll(".page-content > .card, .page-content > .card.collapsible").forEach(e=>{var t=e.querySelector("h2");if(t){var a,r=t.textContent.trim();for(a in MODULE_MAP)if(0<=r.indexOf(a)){e.dataset.module=MODULE_MAP[a];break}}}),document.querySelectorAll(".page-content > .card[data-module]").forEach(e=>{e.style.display="weather"===e.dataset.module?"block":"none"}),updateDashboard()}function switchModule(t,e){document.querySelectorAll(".nav-item").forEach(e=>e.classList.remove("active")),e&&e.classList.add("active");document.getElementById("breadcrumbCurrent").textContent={dashboard:"仪表盘",weather:"气象预报",params:"设备参数",ai:"AI寻优",advice:"优化建议",analysis:"能耗分析",actual:"实测录入",import:"数据导入",tech:"节能技术库",history:"历史回溯"}[t]||t,"dashboard"===t?(document.getElementById("mod-dashboard").style.display="block",document.querySelectorAll(".page-content > .card[data-module]").forEach(e=>e.style.display="none")):(document.getElementById("mod-dashboard").style.display="none",document.querySelectorAll(".page-content > .card[data-module]").forEach(e=>{e.style.display=e.dataset.module===t?"block":"none"}),"advice"===t&&setTimeout(()=>{var e=document.querySelector('.tab[onclick*="tabRecommend"]');e&&e.click()},100),"history"===t&&setTimeout(()=>{var e=document.querySelector('.tab[onclick*="tabHistory"]');e&&e.click()},100)),window.scrollTo({top:0,behavior:"smooth"}),updateDashboard()}function updateDashboard(){var e,t,a;analysisResult&&analysisResult.length&&(e=analysisResult[Math.min(12,analysisResult.length-1)])&&((t=document.getElementById("dashPower"))&&(t.innerHTML=e.opt.totalPower.toFixed(0)+'<span class="stat-unit">kW</span>'),(t=document.getElementById("dashCOP"))&&(t.textContent=e.opt.systemCOP?e.opt.systemCOP.toFixed(2):"--"),(t=document.getElementById("dashTwb"))&&(t.innerHTML=e.hour.wetBulb.toFixed(1)+'<span class="stat-unit">℃</span>'),(t=document.getElementById("dashKwh"))&&(a=analysisResult.reduce((e,t)=>e+t.opt.totalPower,0),t.innerHTML=a.toFixed(0)+'<span class="stat-unit">kWh</span>'),t=document.getElementById("dashOverview"))&&(a=SYSTEM.chillers.filter(e=>0<e.running).map(e=>e.name+e.running+"台").join("、"),t.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px"><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">运行机组</div><div style="font-size:14px;font-weight:700;color:var(--text)">'+a+'</div></div><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">冷却塔</div><div style="font-size:14px;font-weight:700;color:var(--text)">'+SYSTEM.coolingTower.running+"台 @ "+SYSTEM.coolingTower.fanFreq+'Hz</div></div><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">旁通阀开度</div><div style="font-size:14px;font-weight:700;color:var(--text)">'+SYSTEM.bypassValve.opening+'%</div></div><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">冷却水供水</div><div style="font-size:14px;font-weight:700;color:#007AFF">'+e.opt.T_cw_supply.toFixed(1)+'<span class="unit-badge">℃</span></div></div><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">冷却水回水</div><div style="font-size:14px;font-weight:700;color:#FF3B30">'+e.opt.T_cw_return.toFixed(1)+'<span class="unit-badge">℃</span></div></div><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">冷凝温度</div><div style="font-size:14px;font-weight:700;color:#FF9500">'+e.opt.T_cond.toFixed(1)+'<span class="unit-badge">℃</span></div></div></div>')}function getUsers(){try{return JSON.parse(localStorage.getItem("hvacAccounts")||"{}")}catch(e){return{}}}function setUsers(e){localStorage.setItem("hvacAccounts",JSON.stringify(e))}function initDefaultUsers(){var e=getUsers();e.admin||(e.admin={password:"admin123",name:"系统管理员",role:"admin",roleLabel:"管理员",created:nowTimeStr()},setUsers(e))}let KVDB_BUCKET="hvac-qr-login-v2",KVDB_BASE="https://kvdb.io/"+KVDB_BUCKET+"/",qrSessionId=null,qrPollTimer=null;function genSessionId(){return"s"+Date.now().toString(36)+Math.random().toString(36).substring(2,8)}async function showQRLogin(){qrSessionId=genSessionId(),document.getElementById("qrLoginModal").style.display="flex";try{await fetch(KVDB_BASE+qrSessionId,{method:"PUT",body:"pending",headers:{"Content-Type":"text/plain"}})}catch(e){console.log("init session failed",e)}var e=window.location.origin+window.location.pathname+"#confirm="+qrSessionId,t=document.getElementById("qrcode");t.innerHTML="",window.QRCode?new QRCode(t,{text:e,width:180,height:180,correctLevel:QRCode.CorrectLevel.M}):t.innerHTML='<div style="font-size:12px;color:#999">二维码加载中...</div>',document.getElementById("qrStatus").textContent="等待扫码...",qrPollTimer=setInterval(pollQRStatus,2e3)}async function pollQRStatus(){
+}let MODULE_MAP={"地区选择与气象预报":"weather","气象预报与湿球温度":"weather","设备参数设置":"params","参数连锁关系":"params","冷机实时运行参数":"params","AI 自优化引擎":"ai","节能技术库":"tech","数据导入与智能分析":"import","实测电量录入与预测对比":"actual","能耗预测概览":"analysis","逐时运行参数与能耗分析":"analysis"};function initModules(){document.querySelectorAll(".page-content > .card, .page-content > .card.collapsible").forEach(e=>{var t=e.querySelector("h2");if(t){var a,r=t.textContent.trim();for(a in MODULE_MAP)if(0<=r.indexOf(a)){e.dataset.module=MODULE_MAP[a];break}}}),document.querySelectorAll(".page-content > .card[data-module]").forEach(e=>{e.style.display="weather"===e.dataset.module?"block":"none"}),updateDashboard()}function switchModule(t,e){document.querySelectorAll(".nav-item").forEach(e=>e.classList.remove("active")),e&&e.classList.add("active");document.getElementById("breadcrumbCurrent").textContent={dashboard:"仪表盘",weather:"气象预报",params:"设备参数",ai:"AI寻优",advice:"优化建议",analysis:"能耗分析",actual:"实测录入",import:"数据导入",tech:"节能技术库",history:"历史回溯"}[t]||t,"dashboard"===t?(document.getElementById("mod-dashboard").style.display="block",document.querySelectorAll(".page-content > .card[data-module]").forEach(e=>e.style.display="none")):(document.getElementById("mod-dashboard").style.display="none",document.querySelectorAll(".page-content > .card[data-module]").forEach(e=>{e.style.display=e.dataset.module===t?"block":"none"}),"advice"===t&&setTimeout(()=>{var e=document.querySelector('.tab[onclick*="tabRecommend"]');e&&e.click()},100),"history"===t&&setTimeout(()=>{var e=document.querySelector('.tab[onclick*="tabHistory"]');e&&e.click()},100)),window.scrollTo({top:0,behavior:"smooth"}),updateDashboard()}function updateDashboard(){var e,t,a;analysisResult&&analysisResult.length&&(e=analysisResult[Math.min(12,analysisResult.length-1)])&&((t=document.getElementById("dashPower"))&&(t.innerHTML=e.opt.totalPower.toFixed(0)+'<span class="stat-unit">kW</span>'),(t=document.getElementById("dashCOP"))&&(t.textContent=e.opt.systemCOP?e.opt.systemCOP.toFixed(2):"--"),(t=document.getElementById("dashTwb"))&&(t.innerHTML=e.hour.wetBulb.toFixed(1)+'<span class="stat-unit">℃</span>'),(t=document.getElementById("dashKwh"))&&(a=analysisResult.reduce((e,t)=>e+t.opt.totalPower,0),t.innerHTML=a.toFixed(0)+'<span class="stat-unit">kWh</span>'),t=document.getElementById("dashOverview"))&&(a=SYSTEM.chillers.filter(e=>0<e.running).map(e=>e.name+e.running+"台").join("、"),t.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px"><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">运行机组</div><div style="font-size:14px;font-weight:700;color:var(--text)">'+a+'</div></div><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">冷却塔</div><div style="font-size:14px;font-weight:700;color:var(--text)">'+SYSTEM.coolingTower.running+"台 @ "+SYSTEM.coolingTower.fanFreq+'Hz</div></div><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">旁通阀开度</div><div style="font-size:14px;font-weight:700;color:var(--text)">'+SYSTEM.bypassValve.opening+'%</div></div><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">冷却水供水</div><div style="font-size:14px;font-weight:700;color:#007AFF">'+e.opt.T_cw_supply.toFixed(1)+'<span class="unit-badge">℃</span></div></div><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">冷却水回水</div><div style="font-size:14px;font-weight:700;color:#FF3B30">'+e.opt.T_cw_return.toFixed(1)+'<span class="unit-badge">℃</span></div></div><div><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">冷凝温度</div><div style="font-size:14px;font-weight:700;color:#FF9500">'+e.opt.T_cond.toFixed(1)+'<span class="unit-badge">℃</span></div></div></div>')}function getUsers(){try{return JSON.parse(localStorage.getItem("hvacAccounts")||"{}")}catch(e){return{}}}function setUsers(e){localStorage.setItem("hvacAccounts",JSON.stringify(e))}function initDefaultUsers(){var e=getUsers();e.admin||(e.admin={password:"admin123",name:"系统管理员",role:"admin",roleLabel:"管理员",created:nowTimeStr()},setUsers(e))}let KVDB_BUCKET="hvac-qr-login-v2",KVDB_BASE="https://kvdb.io/"+KVDB_BUCKET+"/",qrSessionId=null,qrPollTimer=null;function genSessionId(){return"s"+Date.now().toString(36)+Math.random().toString(36).substring(2,8)}async function showQRLogin(){
+  qrSessionId=genSessionId();
+  document.getElementById("qrLoginModal").style.display="flex";
+  try{
+    await fetch(KVDB_BASE+qrSessionId,{method:"PUT",body:"pending",headers:{"Content-Type":"text/plain"}});
+  }catch(e){}
+  var e=window.location.origin+window.location.pathname+"#confirm="+qrSessionId;
+  var t=document.getElementById("qrcode");
+  t.innerHTML="";
+  if(window.QRCode){
+    new QRCode(t,{text:e,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});
+  }else{
+    t.innerHTML='<div style="font-size:12px;color:#999">二维码加载中...</div>';
+  }
+  document.getElementById("qrStatus").innerHTML='等待扫码... <span style="color:var(--text3);font-size:11px">(检测中)</span>';
+  qrPollTimer=setInterval(pollQRStatus,1000);
+  // 2分钟后自动过期
+  setTimeout(function(){
+    if(qrPollTimer){
+      clearInterval(qrPollTimer);
+      qrPollTimer=null;
+      document.getElementById("qrStatus").innerHTML='<span style="color:#FF9500">二维码已过期，请关闭重新打开</span>';
+    }
+  },120000);
+}async function pollQRStatus(){
   if(!qrSessionId)return;
   try{
     var resp=await fetch(KVDB_BASE+qrSessionId,{cache:"no-store"});
@@ -29,38 +53,35 @@ ${rangeInput("旁通阀开度","bypass_opening",SYSTEM.bypassValve.opening,0,100
     if(t.startsWith("confirmed:")){
       var e=t.substring(10);
       clearInterval(qrPollTimer);
+      qrPollTimer=null;
       fetch(KVDB_BASE+qrSessionId,{method:"DELETE"}).catch(function(){});
       closeQRLogin();
       doLoginSuccess(e,"scan");
-    }else if(t==="expired"){
-      clearInterval(qrPollTimer);
-      document.getElementById("qrStatus").textContent="二维码已过期，请刷新";
     }
   }catch(e){
-    // 静默重试，不报错
+    // 网络抖动，继续重试
   }
 }function closeQRLogin(){qrPollTimer&&(clearInterval(qrPollTimer),qrPollTimer=null),qrSessionId&&(fetch(KVDB_BASE+qrSessionId,{method:"DELETE"}).catch(()=>{}),qrSessionId=null),document.getElementById("qrLoginModal").style.display="none"}async function autoConfirmLogin(e){
-  if(!e){document.getElementById("confirmMsg").textContent="无效的会话";return;}
-  document.getElementById("confirmMsg").textContent="正在确认登录...";
+  if(!e){
+    document.getElementById("confirmMsg").innerHTML='<div style="color:#FF3B30">无效的会话</div>';
+    return;
+  }
+  document.getElementById("confirmMsg").innerHTML='<div style="font-size:32px;margin-bottom:8px">⏳</div><div>正在确认登录...</div>';
   var t="扫码用户_"+Date.now().toString(36);
   var ok=false;
-  // 重试3次
-  for(var i=0;i<3&&!ok;i++){
+  for(var i=0;i<5&&!ok;i++){
     try{
-      await fetch(KVDB_BASE+e,{method:"PUT",body:"confirmed:"+t,headers:{"Content-Type":"text/plain"},mode:"cors"});
+      await fetch(KVDB_BASE+e,{method:"PUT",body:"confirmed:"+t,headers:{"Content-Type":"text/plain"}});
       ok=true;
     }catch(a){
-      await new Promise(function(r){setTimeout(r,500)});
+      await new Promise(function(r){setTimeout(r,800)});
     }
   }
+  var cp=document.getElementById("confirmPage");
   if(ok){
-    document.getElementById("confirmMsg").innerHTML='<div style="font-size:48px;margin-bottom:8px">✓</div><div style="color:#34C759;font-size:18px;font-weight:700">登录成功</div><div style="color:var(--text3);font-size:13px;margin-top:4px">请在电脑端查看</div>';
-    setTimeout(function(){
-      document.getElementById("confirmPage").style.display="none";
-      history.replaceState(null,"",window.location.pathname);
-    },2000);
+    cp.innerHTML='<div style="background:var(--card);border-radius:20px;padding:40px 32px;width:340px;text-align:center;box-shadow:var(--shadow-lg)"><div style="font-size:64px;margin-bottom:16px">✓</div><div style="font-size:22px;font-weight:700;color:#34C759;margin-bottom:8px">登录成功</div><div style="font-size:14px;color:var(--text3);margin-bottom:8px">已确认登录冰水系统群控平台</div><div style="font-size:12px;color:var(--text4)">请在电脑端查看系统界面</div><div style="font-size:11px;color:var(--text4);margin-top:16px">此页面可直接关闭</div></div>';
   }else{
-    document.getElementById("confirmMsg").innerHTML='<div style="color:#FF3B30">确认失败</div><div style="color:var(--text3);font-size:12px;margin-top:4px">网络异常，请刷新页面重试</div>';
+    cp.innerHTML='<div style="background:var(--card);border-radius:20px;padding:40px 32px;width:340px;text-align:center;box-shadow:var(--shadow-lg)"><div style="font-size:64px;margin-bottom:16px">⚠️</div><div style="font-size:22px;font-weight:700;color:#FF3B30;margin-bottom:8px">确认失败</div><div style="font-size:14px;color:var(--text3)">网络异常，请刷新页面重试</div></div>';
   }
 }async function confirmQRLogin(){autoConfirmLogin(new URLSearchParams(window.location.search).get("session"))}function doLoginSuccess(e,t){currentUser={name:e,role:t||"scan",loginTime:(new Date).toISOString()},localStorage.setItem("hvacCurrentUser",JSON.stringify(currentUser)),document.getElementById("loginOverlay").style.display="none",updateUserDisplay(),addLoginLog(e,t||"scan")}function checkConfirmPage(){
   var hash=window.location.hash;
