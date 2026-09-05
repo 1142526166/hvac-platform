@@ -74,10 +74,18 @@ async function pollNTFY(){
         }
       }catch(e){}
     }
-    // 显示轮询状态
+    // 显示轮询状态和消息内容（调试）
     var statusEl=document.getElementById("qrStatus");
     if(statusEl&&!got){
-      statusEl.innerHTML='等待扫码... <span style="color:var(--text3);font-size:11px">(监听中 '+lines.length+'条)</span>';
+      var msgs=[];
+      lines.forEach(function(l){
+        try{
+          var m=JSON.parse(l);
+          if(m.event==="message")msgs.push(m.message.substring(0,30));
+        }catch(e){}
+      });
+      var debugInfo=msgs.length>0?msgs.join(","):"无消息";
+      statusEl.innerHTML='等待扫码... <span style="color:var(--text3);font-size:11px">(监听中 '+lines.length+'条 | '+debugInfo+')</span>';
     }
   }catch(e){
     var statusEl=document.getElementById("qrStatus");
@@ -110,23 +118,28 @@ function submitVerifyCode(){
   var user="扫码用户_"+Date.now().toString(36);
   var ok=false;
   var subMsg=document.getElementById("confirmSubMsg");
-  // 用sendBeacon发送（移动端更可靠）
-  try{
-    if(navigator.sendBeacon){
-      ok=navigator.sendBeacon(NTFY_BASE+topic,"confirmed:"+user);
+  // 用fetch no-cors发送（强制发送，不检查跨域，移动端最可靠）
+  for(var i=0;i<5&&!ok;i++){
+    try{
+      if(subMsg)subMsg.textContent="正在发送确认... (第"+(i+1)+"次)";
+      await fetch(NTFY_BASE+topic,{
+        method:"POST",
+        body:"confirmed:"+user,
+        mode:"no-cors",
+        headers:{"Content-Type":"text/plain"}
+      });
+      ok=true; // no-cors不抛异常就算发送成功
+    }catch(a){
+      await new Promise(function(r){setTimeout(r,500)});
     }
-  }catch(e){}
-  // 如果sendBeacon失败，用fetch重试
+  }
+  // 备用：sendBeacon
   if(!ok){
-    for(var i=0;i<3&&!ok;i++){
-      try{
-        if(subMsg)subMsg.textContent="正在发送确认... (第"+(i+1)+"次)";
-        await fetch(NTFY_BASE+topic,{method:"POST",body:"confirmed:"+user,mode:"cors"});
-        ok=true;
-      }catch(a){
-        await new Promise(function(r){setTimeout(r,800)});
+    try{
+      if(navigator.sendBeacon){
+        ok=navigator.sendBeacon(NTFY_BASE+topic,"confirmed:"+user);
       }
-    }
+    }catch(e){}
   }
   if(ok){
     cp.innerHTML='<div style="background:var(--card);border-radius:20px;padding:40px 32px;width:340px;text-align:center;box-shadow:var(--shadow-lg)"><div style="font-size:64px;margin-bottom:16px">✓</div><div style="font-size:22px;font-weight:700;color:#34C759;margin-bottom:8px">登录成功</div><div style="font-size:14px;color:var(--text3);margin-bottom:8px">已确认登录冰水系统群控平台</div><div style="font-size:12px;color:var(--text4)">请在电脑端查看系统界面</div><div style="font-size:11px;color:var(--text4);margin-top:16px">此页面可直接关闭</div></div>';
