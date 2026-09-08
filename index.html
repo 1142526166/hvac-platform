@@ -85,18 +85,20 @@ desc:"①冷凝器端差"+M.avgCondApproach.toFixed(2)+"℃，"+(M.avgCondApproa
 // === 深度专业分析 ===
 // 25. 最佳冷凝温度动态分析
 var bestTcond = M.T_cond;
-var bestTcondPower = I;
-for(var tc = Math.max(f.minCondTemp, 22); tc <= 36; tc += 0.5) {
-  var savedFan = f.fanFreq;
-  f.fanFreq = Math.max(20, Math.min(50, 20 + (tc - T - 3) * 3));
-  var testM = solveSystem(T);
-  if(testM && testM.totalPower < bestTcondPower) {
-    bestTcondPower = testM.totalPower;
-    bestTcond = tc;
+var bestTcondPower = Number(I) || 0;
+try {
+  for(var tc = Math.max(f.minCondTemp, 22); tc <= 36; tc += 0.5) {
+    var savedFan = f.fanFreq;
+    f.fanFreq = Math.max(20, Math.min(50, 20 + (tc - T - 3) * 3));
+    var testM = solveSystem(T);
+    if(testM && typeof testM.totalPower === 'number' && isFinite(testM.totalPower) && testM.totalPower < bestTcondPower) {
+      bestTcondPower = testM.totalPower;
+      bestTcond = tc;
+    }
+    f.fanFreq = savedFan;
   }
-  f.fanFreq = savedFan;
-}
-var condSave = I - bestTcondPower;
+} catch(e) { console.error('cond scan error', e); }
+var condSave = (Number(I)||0) - bestTcondPower;
 G.push({title:"🌡️ 最佳冷凝温度动态分析　当前"+M.T_cond.toFixed(1)+"℃ → 理论最优"+bestTcond.toFixed(1)+"℃",
 desc:"冷凝温度每降1℃，冷机COP提升约2.2%，但冷却塔风机功率按频率三次方上升。在湿球"+T.toFixed(1)+"℃条件下，逐点扫描冷凝温度22-36℃的总功耗，理论最优点在<b>"+bestTcond.toFixed(1)+"℃</b>，对应总功率"+bestTcondPower.toFixed(0)+"kW（当前"+I.toFixed(0)+"kW，理论差"+condSave.toFixed(0)+"kW）。<br>【工程含义】冷凝温度不是越低越好——湿球低时风机降频省的钱可能超过冷机多耗的电；湿球高时风机升频把冷凝温度压到最优值。当前距喘振保护"+f.minCondTemp+"℃还有"+(M.T_cond-f.minCondTemp).toFixed(1)+"℃裕量。<br>【操作】群控寻优目标值设定为"+bestTcond.toFixed(1)+"℃，通过冷却塔频率闭环调节逼近，每15分钟寻优一次。"});
 
@@ -137,10 +139,10 @@ desc:"未来湿球温度变化平缓，当前参数可全天维持运行，无�
 // 28. 热回收能量分析
 var hrChiller = M.chillerDetails.find(function(e){return e.ch.id==="hr"});
 if(hrChiller) {
-  var hrCooling = hrChiller.rt * RT_TO_KW * hrChiller.plr;
-  var hrEstHeat = hrCooling * 0.85; // 热回收效率约85%
-  var hrElec = hrChiller.power;
-  var hrCOP_withHeat = (hrCooling + hrEstHeat) / hrElec;
+  var hrCooling = Number(hrChiller.rt||0) * RT_TO_KW * Number(hrChiller.plr||0);
+  var hrEstHeat = hrCooling * 0.85;
+  var hrElec = Number(hrChiller.power||0);
+  var hrCOP_withHeat = hrElec > 0 ? (hrCooling + hrEstHeat) / hrElec : 0;
   G.push({title:"♨️ 热回收能量分析　制冷"+hrCooling.toFixed(0)+"kW + 供热"+hrEstHeat.toFixed(0)+"kW",
 desc:"热回收机组同时产出冷冻冷量约<b>"+hrCooling.toFixed(0)+"kW</b>和热水热量约<b>"+hrEstHeat.toFixed(0)+"kW</b>（冷凝热回收效率85%估算），综合能效比(冷+热)/电=<b>"+hrCOP_withHeat.toFixed(2)+"</b>，远超纯制冷COP "+hrChiller.cop.toFixed(2)+"。<br>温水泵"+ (SYSTEM.chillers.find(function(e){return e.id==="hr"})).hotWaterPump.running +"台运行，MAU再热用水正常。夏季除湿量大时再热需求高，热回收机组价值更大；冬季湿球低时可评估是否降低热水侧温度设定。<br>【操作】维持热回收机组运行，温水泵频率跟随MAU送风温度PID调节。"});
 }
