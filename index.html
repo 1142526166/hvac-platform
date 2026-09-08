@@ -137,7 +137,7 @@ document.getElementById("recommendList").innerHTML=G.map(e=>`<div class="rec-ite
 
 
 
-function closeQRLogin(){document.getElementById("qrLoginModal").style.display="none";document.getElementById("qrVerifyInput").value="";}
+function closeQRLogin(){document.getElementById("qrLoginModal").style.display="none";}
 function submitVerifyCode(){
   closeQRLogin();
   doLoginSuccess("扫码用户","scan");
