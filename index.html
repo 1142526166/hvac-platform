@@ -88,6 +88,8 @@ document.getElementById("recommendList").innerHTML=G.map(e=>`<div class="rec-ite
   if(hash.indexOf("#scan=")>=0){
     var sc=hash.match(/code=(\d+)/);
     var scode=sc?sc[1]:"";
+    // 清除手机端旧登录缓存，强制显示验证码
+    try{localStorage.removeItem("hvacCurrentUser");localStorage.removeItem("hvacAccounts");sessionStorage.clear();}catch(e){}
     // 手机端显示验证码页面
     document.body.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#1a1a2e;color:#fff;font-family:-apple-system,sans-serif;text-align:center;padding:20px"><div style="font-size:60px;margin-bottom:20px">❄️</div><h2 style="margin:0 0 10px">扫码成功</h2><p style="color:#aaa;margin:0 0 30px">请在电脑端输入以下验证码完成登录</p><div style="font-size:48px;font-weight:700;color:#34C759;letter-spacing:12px;margin:20px 0;padding:20px 40px;border:2px solid #34C759;border-radius:16px">'+scode+'</div><p style="color:#666;margin-top:30px;font-size:14px">此页面可关闭</p></div>';
     return;
@@ -118,7 +120,7 @@ document.getElementById("recommendList").innerHTML=G.map(e=>`<div class="rec-ite
   // 生成一个简单的会话码
   var sid="hvac"+Date.now().toString(36)+Math.random().toString(36).substr(2,6);
   var code=String(Math.floor(100000+899999*Math.random()));
-  var url=window.location.origin+window.location.pathname+"#scan="+sid+"&code="+code;
+  var url=window.location.origin+window.location.pathname+"?v="+Date.now()+"#scan="+sid+"&code="+code;
   if(window.QRCode){
     try{
       new QRCode(t,{text:url,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});
