@@ -63,7 +63,7 @@ var _aw=M.airWaterRatio,_oaw=M.optAirWaterRatio;
 if(_aw&&_oaw&&Math.abs(_aw-_oaw)>0.1){
   var _tw=SYSTEM.coolingTower.towers*SYSTEM.coolingTower.fanPower;
   var _curF=SYSTEM.coolingTower.fanFreq;
-  var _wr=_aw/(_curF/50);
+  var _wr=(_curF/50)/_aw;
   var _optF=Math.max(20,Math.min(50,_oaw*_wr*50));
   var _saveP=_tw*(Math.pow(_curF/50,3)-Math.pow(_optF/50,3));
   if(_saveP>5){
