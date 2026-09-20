@@ -142,7 +142,7 @@ var CS={
       this.setStatus("on","☁️ 云已同步");this.renderPanel();
       this.csToast("云端实时同步已连接");
     }catch(e){
-      this.connecting=false;this.online=false;this.needAnon=true;
+      this.connecting=false;this.online=false;this.needAnon=true;this.lastError=String((e&&e.message)||e);
       try{this.stopPolling();}catch(_){}
       this.setStatus("off","💾 本机存储");this.renderPanel();
       throw e;
@@ -290,7 +290,7 @@ var CS={
     setCsText("csAt",this.remoteAt?csFmt(this.remoteAt):(m.at?csFmt(m.at):"尚未同步"));
     setCsText("csBy",this.remoteBy||m.by||"–");
     setCsText("csRev",this.rev||m.rev||0);
-    var w=document.getElementById("csEnvWarn");if(w)w.style.display=CLOUD_ENV_ID?"none":"block";
+    var w=document.getElementById("csEnvWarn");if(w){if(!CLOUD_ENV_ID){w.textContent="云端环境尚未配置（缺少环境 ID），实时同步不可用，当前仅本机存储。请联系管理员在程序中填入云开发环境 ID 并部署。";w.style.display="block";}else if(!this.online){var host=location.hostname||"当前域名";w.innerHTML="当前访问域名 <b>"+host+"</b> 未加入云开发 Web 安全域名，实时同步暂不可用，已自动切换本机存储（其余功能正常）。管理员请在【CloudBase 控制台 → 身份认证 → 安全配置 → Web 安全域名】中添加：<b>"+host+"</b>，保存后约 1–2 分钟生效，刷新即恢复云端同步。";w.style.display="block";}else{w.style.display="none";}}
     var hint=document.getElementById("csAnonHint");
     if(hint)hint.style.display=(this.online||!this.needAnon)?"none":"block";
     var btn=document.getElementById("csLoginBtn");
