@@ -45,15 +45,18 @@
   <div class="ai-note">推荐使用 <b>DeepSeek</b>（成本极低，官方接口已验证支持网页直接跨域调用）：接口地址默认 https://api.deepseek.com ，模型填 <b>deepseek-chat</b>，在 platform.deepseek.com 申请 API Key 填入即可。若“测试连接”提示<b>超时或无法连接</b>，多为当前公司网络/防火墙拦截 api.deepseek.com（密钥错误会明确提示 401 而非超时），可切换手机热点验证；也可在上方选择硅基流动、通义、混元、OpenAI 或公司内网 OpenAI 兼容网关。</div>
 </div>
 <div id="setToken" class="settings-tab-content" style="display:none"><div style="max-width:400px"><div class="form-group" style="margin-bottom:12px"><label>当前口令</label><input class="login-input" type="password" id="oldToken" placeholder="请输入当前管理员口令"></div><div class="form-group" style="margin-bottom:12px"><label>新口令</label><input class="login-input" type="password" id="newToken" placeholder="请输入新口令（6位以上）"></div><div class="form-group" style="margin-bottom:16px"><label>确认新口令</label><input class="login-input" type="password" id="confirmToken" placeholder="请再次输入新口令"></div><button class="btn" onclick="changeAdminToken()">修改口令</button></div></div><div id="setCloud" class="settings-tab-content" style="display:none">
-  <div style="font-size:13px;color:var(--text3);margin-bottom:14px;line-height:1.6">多台电脑、手机打开同一网址即自动进入<b>同一个云端工作区</b>，设备运行参数、标准配置、地址、实测电量、优化记忆、账号与权限<b>秒级实时互相同步</b>；任一端修改，其余端自动刷新。数据存于腾讯云开发（上海）集合 hvac_sync，采用匿名免密接入，人员操作权限由本系统账号 / 扫码登录控制。与下方「123 云盘」手动快照互补：云盘是定期备份文件，本项是自动实时同步。</div>
-  <div id="csEnvWarn" style="display:none;font-size:12.5px;color:#fff;background:#FF3B30;border-radius:9px;padding:9px 12px;margin-bottom:12px;line-height:1.5">云端环境尚未配置（缺少环境 ID），实时同步不可用，当前仅本机存储。请联系管理员在程序中填入云开发环境 ID 并部署。</div>
+  <div style="font-size:13px;color:var(--text3);margin-bottom:14px;line-height:1.65">多台电脑、手机打开同一网址即进入<b>同一个云端工作区</b>，设备运行参数、标准配置、地址、实测电量、优化记忆、账号与权限<b>秒级互相同步</b>；任一端修改，其余端自动刷新。数据存于 <b>GitHub 私密 Gist</b>（免费、<b>无需备案</b>、网页可直接跨域访问），与「数据备份」的手动快照互补。</div>
+  <div id="csEnvWarn" style="display:none;font-size:12.5px;color:#fff;background:#FF3B30;border-radius:9px;padding:9px 12px;margin-bottom:12px;line-height:1.5"></div>
 
   <div id="csForm">
     <div style="font-size:12.5px;color:var(--text2);line-height:1.7;background:var(--bg);border-radius:10px;padding:12px 14px;margin-bottom:12px">
-      本工作区采用<b>匿名免密接入</b>：打开页面会自动连接云端，电脑与手机实时共享同一份数据（设备参数、标准配置、地址、实测电量、优化记忆、账号权限），无需输入账号密码；人员操作权限仍由本系统的账号 / 扫码登录控制。
-      <div id="csAnonHint" style="display:none;color:#FF9500;margin-top:8px;line-height:1.6">☁️ 当前未能连接云端（本机存储）。请在腾讯云开发控制台开启「身份认证 → 登录方式 → <b>匿名登录</b>」，并在数据库建立集合 <b>hvac_sync</b>、权限设为「所有用户可读可写」，然后点下方按钮重连。</div>
+      <b>首次使用</b>：① 到 GitHub 生成一个<b>仅勾选 gist 权限</b>的 Token（classic）：<a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a>，建议设过期时间；② Token 粘贴到下方，<b>工作区ID 留空</b>，点“创建并连接工作区”，系统自动建立私密 Gist。<br>
+      <b>加入已有工作区</b>：填同一个 Token，并向首台设备索取“工作区ID”填入即可。
+      <div style="color:var(--text3);margin-top:8px;line-height:1.6">🔒 Token 仅保存在本设备浏览器，不进入同步数据、不随仓库公开；可随时在 GitHub 吊销。</div>
     </div>
-    <button id="csLoginBtn" onclick="cloudLoginSubmit()" style="width:100%;padding:13px;border:none;border-radius:10px;background:#007AFF;color:#fff;font-size:14px;font-weight:600;cursor:pointer">连接云端工作区</button>
+    <div class="form-group" style="margin-bottom:10px"><label>GitHub Token（需 gist 权限）</label><input id="csGhToken" type="password" placeholder="ghp_..." autocomplete="off" style="width:100%;padding:9px 10px;border-radius:9px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px"></div>
+    <div class="form-group" style="margin-bottom:12px"><label>工作区 ID（留空 = 新建工作区）</label><input id="csGhGist" type="text" placeholder="加入已有工作区填 Gist ID；首次留空" style="width:100%;padding:9px 10px;border-radius:9px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px"></div>
+    <button id="csLoginBtn" onclick="cloudLoginSubmit()" style="width:100%;padding:13px;border:none;border-radius:10px;background:#007AFF;color:#fff;font-size:14px;font-weight:600;cursor:pointer">创建并连接工作区</button>
   </div>
 
   <div id="csRow" style="display:none">
@@ -62,23 +65,26 @@
     </div>
     <div style="background:var(--bg);border-radius:10px;padding:12px 14px;font-size:13px;line-height:2;margin-bottom:12px">
       <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">本设备标识</span><b id="csUser">–</b></div>
+      <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:var(--text3);white-space:nowrap">工作区 ID（新设备加入用）</span><b id="csGistId" style="word-break:break-all;text-align:right">–</b></div>
       <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">最近云端更新</span><b id="csAt">–</b></div>
       <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">更新来源设备</span><b id="csBy">–</b></div>
       <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">同步版本</span><b id="csRev">0</b></div>
     </div>
-    <div style="display:flex;gap:12px">
-      <button onclick="CS.pushNow()" style="flex:1;padding:12px;border:none;border-radius:10px;background:#34C759;color:#fff;font-size:14px;font-weight:600;cursor:pointer">立即同步一次</button>
-      <button onclick="CS.logout()" style="flex:1;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--fill);color:var(--text);font-size:14px;font-weight:600;cursor:pointer">退出云同步</button>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button onclick="CS.pushNow()" style="flex:1;min-width:120px;padding:12px;border:none;border-radius:10px;background:#34C759;color:#fff;font-size:14px;font-weight:600;cursor:pointer">立即同步一次</button>
+      <button onclick="CS.copyInvite()" style="flex:1;min-width:120px;padding:12px;border:none;border-radius:10px;background:#007AFF;color:#fff;font-size:14px;font-weight:600;cursor:pointer">复制加入指引</button>
+      <button onclick="CS.logout()" style="flex:1;min-width:120px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--fill);color:var(--text);font-size:14px;font-weight:600;cursor:pointer">退出云同步</button>
     </div>
   </div>
 
   <div style="height:1px;background:var(--separator);margin:16px 0"></div>
   <div style="font-size:12px;color:var(--text3);line-height:1.7">
     <b style="color:var(--text2)">同步范围</b>：设备运行参数、标准配置、所选地址、实测电量、优化寻优记忆、账号名单与权限配置。<br>
-    <b style="color:var(--text2)">不同步</b>：当前登录会话、管理员口令、操作/使用日志、主题与折叠等本机界面偏好。<br>
+    <b style="color:var(--text2)">不同步</b>：GitHub Token、AI 密钥、当前登录会话、管理员口令、操作日志、主题等本机偏好。<br>
     冲突按“最近修改优先”按键自动合并，不会覆盖另一端更新的数据。
   </div>
 </div>
+
 <div id="setBackup" class="settings-tab-content" style="display:none">
   <div style="font-size:13px;color:var(--text3);margin-bottom:14px;line-height:1.6">数据快照导出为 JSON 文件，配合 <b>123 云盘“同步文件夹”</b>在电脑与手机间备份、迁移：导出后放进同步文件夹即自动上云，换机取回文件一键恢复。支持口令加密（AES-256）。</div>
   <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
@@ -160,11 +166,17 @@ var CLOUD_META_KEY="hvacCloudMeta";
 var CLOUD_SYNC_KEYS=["hvacSystemAutoSave","hvacSystemSnapshot","hvacAddress","hvacActualDaily","hvacOptMemory","hvacAccounts","hvacPerms","hvacAiAuto"];
 /* 云端实时同步：CloudBase v3 SDK + 匿名免密 + PostgreSQL(PostgREST) 单行 main；
    上行读-合并-写 + rev 乐观锁，下行 3 秒轮询（页面重新可见立即拉），字段级 ts 最后写入获胜(LWW) */
+var GH_SYNC_CFG_KEY="hvacGhSync";
+var GH_API="https://api.github.com";
+var GH_GIST_FILE="hvac_sync.json";
 var CS={
-  app:null,auth:null,rdb:null,online:false,connecting:false,needAnon:false,
-  user:"",rev:0,remoteData:{},remoteAt:0,remoteBy:"",pushTimer:null,pollTimer:null,applying:false,pulling:false,sdkLoading:null,_bound:false,
-  meta:function(){try{return JSON.parse(localStorage.getItem(CLOUD_META_KEY)||"{}")}catch(e){return{}}},
+  online:false,connecting:false,
+  user:"",rev:0,remoteData:{},remoteAt:0,remoteBy:"",gistId:"",token:"",etag:null,
+  pushTimer:null,pollTimer:null,applying:false,pulling:false,_bound:false,lastError:"",
+  meta:function(){try{return JSON.parse(localStorage.getItem(CLOUD_META_KEY)||"{}")}catch(e){return{} } },
   setMeta:function(o){var m=this.meta();for(var k in o)m[k]=o[k];try{localStorage.setItem(CLOUD_META_KEY,JSON.stringify(m))}catch(e){}},
+  cfg:function(){try{return JSON.parse(localStorage.getItem(GH_SYNC_CFG_KEY)||"{}")}catch(e){return{} } },
+  setCfg:function(o){var c=this.cfg();for(var k in o)c[k]=o[k];try{localStorage.setItem(GH_SYNC_CFG_KEY,JSON.stringify(c))}catch(e){}},
   deviceName:function(){
     var m=this.meta();
     if(!m.device){
@@ -187,42 +199,89 @@ var CS={
     var sx=document.getElementById("csState");
     if(sx){sx.className="cs-state "+state;sx.textContent=text||"";}
   },
-  loadSdk:function(){
-    if(window.cloudbase&&window.cloudbase.init)return Promise.resolve(window.cloudbase);
-    if(this.sdkLoading)return this.sdkLoading;
-    this.sdkLoading=new Promise(function(res,rej){
-      var t=document.createElement("script");
-      t.src=CLOUD_SDK_URL;t.async=true;
-      t.onload=function(){window.cloudbase&&window.cloudbase.init?res(window.cloudbase):rej(new Error("云SDK初始化失败"))};
-      t.onerror=function(){rej(new Error("云SDK加载失败，请检查网络"))};
-      document.head.appendChild(t);
-    });
-    return this.sdkLoading;
+  ghHeaders:function(extra){
+    var h={"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"};
+    if(this.token)h["Authorization"]="Bearer "+this.token;
+    if(extra)for(var k in extra)h[k]=extra[k];
+    return h;
+  },
+  async ghGetGist(useEtag){
+    var h=this.ghHeaders();
+    if(useEtag!==false&&this.etag)h["If-None-Match"]=this.etag;
+    var r=await fetch(GH_API+"/gists/"+encodeURIComponent(this.gistId),{headers:h});
+    if(r.status===304)return{status:304};
+    if(r.status===401)throw new Error("GitHub Token 无效或已过期（401）");
+    if(r.status===404)throw new Error("找不到该 Gist 工作区（404），请核对工作区ID");
+    if(!r.ok)throw new Error("GitHub 读取失败 HTTP"+r.status);
+    var j=await r.json();
+    var file=j.files&&j.files[GH_GIST_FILE];
+    if(!file||!file.content)throw new Error("Gist 中缺少文件 "+GH_GIST_FILE);
+    var row;try{row=JSON.parse(file.content)}catch(e){throw new Error("Gist 数据解析失败")}
+    return{status:200,row:row,etag:r.headers.get("ETag"),updated_at:j.updated_at};
+  },
+  async ghCreateGist(row){
+    var body={description:"hvac-platform 云同步工作区（自动创建，请勿删除）",public:false,files:{}};
+    body.files[GH_GIST_FILE]={content:JSON.stringify(row)};
+    var r=await fetch(GH_API+"/gists",{method:"POST",headers:this.ghHeaders({"Content-Type":"application/json"}),body:JSON.stringify(body)});
+    if(r.status===401)throw new Error("GitHub Token 无效或未勾选 gist 权限（401）");
+    if(r.status===403)throw new Error("GitHub 拒绝访问（403，可能 Token 权限不足或限流）");
+    if(!r.ok)throw new Error("创建工作区失败 HTTP"+r.status);
+    var j=await r.json();
+    return{id:j.id,etag:r.headers.get("ETag"),url:j.html_url};
+  },
+  async ghPatchGist(row){
+    var body={files:{}};
+    body.files[GH_GIST_FILE]={content:JSON.stringify(row)};
+    var r=await fetch(GH_API+"/gists/"+encodeURIComponent(this.gistId),{method:"PATCH",headers:this.ghHeaders({"Content-Type":"application/json"}),body:JSON.stringify(body)});
+    if(r.status===401)throw new Error("GitHub Token 无效（401）");
+    if(r.status===404)throw new Error("工作区不存在（404）");
+    if(!r.ok)throw new Error("写入工作区失败 HTTP"+r.status);
+    return{etag:r.headers.get("ETag")};
+  },
+  async fetchRow(){
+    var g=await this.ghGetGist(true);
+    if(g.status===304)return null;
+    this.etag=g.etag;return g.row;
   },
   async login(){
     if(this.connecting)return;
-    if(!CLOUD_ENV_ID)throw new Error("云端环境ID未配置");
-    if(this.app&&this.online)return;
-    var self=this;
-    this.connecting=true;this.needAnon=false;
+    this.connecting=true;
     this.setStatus("wait","☁️ 连接中…");
     try{
-      var cb=await this.loadSdk();
-      this.app=cb.init({env:CLOUD_ENV_ID});
-      this.auth=this.app.auth();      // v3 必须函数调用
-      this.rdb=this.app.rdb();        // 关系库(PostgREST)客户端
-      var lr=await this.auth.signInAnonymously();
-      if(lr&&lr.error)throw new Error((lr.error.helpMessage||lr.error.message||lr.error.code||"云端匿名登录失败"));
-      this.user="匿名·"+this.deviceName();
+      var ti=document.getElementById("csGhToken"),gi=document.getElementById("csGhGist");
+      var tok=ti&&ti.value?ti.value.trim():"";
+      var gid=gi&&gi.value?gi.value.trim():"";
+      var saved=this.cfg();
+      if(!tok)tok=saved.token||"";
+      if(!gid)gid=saved.gistId||"";
+      if(!tok)throw new Error("请填写 GitHub Token（需 gist 权限）");
+      this.token=tok;
+      this.deviceName();
+      var row=null;
+      if(gid){
+        this.gistId=gid;
+        var g=await this.ghGetGist(false);
+        if(g.status===200){this.etag=g.etag;row=g.row;}
+      }else{
+        var initRow={id:CLOUD_ROW,rev:1,updated_at:Date.now(),by:this.deviceName(),data:this.collect()};
+        var c=await this.ghCreateGist(initRow);
+        this.gistId=c.id;this.etag=c.etag;row=initRow;
+      }
+      this.setCfg({token:this.token,gistId:this.gistId});
+      this.user="GitHub·"+this.deviceName();
       this.online=true;
-      await this.bootstrap();
+      if(row){
+        this.rev=row.rev||1;this.remoteData=row.data||{};this.remoteAt=row.updated_at||0;this.remoteBy=row.by||"";
+        this.setMeta({rev:this.rev,at:this.remoteAt,by:this.remoteBy});
+        this.applyRemote(row,true);
+      }
       this.startPolling();this.bindFocus();
       this.connecting=false;
-      this.schedulePush();            // 首次把本机数据合并上云
+      this.schedulePush();
       this.setStatus("on","☁️ 云已同步");this.renderPanel();
-      this.csToast("云端实时同步已连接");
+      this.csToast("云端工作区已连接（GitHub 私密 Gist）");
     }catch(e){
-      this.connecting=false;this.online=false;this.needAnon=true;this.lastError=String((e&&e.message)||e);
+      this.connecting=false;this.online=false;this.lastError=String((e&&e.message)||e);
       try{this.stopPolling();}catch(_){}
       this.setStatus("off","💾 本机存储");this.renderPanel();
       throw e;
@@ -231,9 +290,8 @@ var CS={
   async logout(){
     try{this.stopPolling();}catch(e){}
     this.online=false;
-    try{await this.auth.signOut();}catch(e){}
     this.setStatus("off","💾 本机存储");this.renderPanel();
-    this.csToast("已断开云同步，数据仅保存在本机");
+    this.csToast("已断开云同步，数据仅保存在本机（配置已保留，可重连）");
   },
   collect:function(){
     var d={};
@@ -243,25 +301,7 @@ var CS={
     });
     return d;
   },
-  async fetchRow(){
-    var r=await this.rdb.from(CLOUD_TABLE).select("*").eq("id",CLOUD_ROW);
-    if(r&&r.error){var er=new Error(r.error.message||r.error.code||"云端读取失败");er.code=r.error.code;throw er;}
-    return (r.data&&r.data[0])||null;
-  },
-  async bootstrap(){
-    var row=null;
-    try{row=await this.fetchRow();}catch(e){row=null;}
-    if(!row){
-      var ins={id:CLOUD_ROW,rev:1,updated_at:Date.now(),by:this.deviceName(),data:this.collect()};
-      var u=await this.rdb.from(CLOUD_TABLE).upsert(ins).select();
-      if(u&&u.error)throw new Error(u.error.message||"云端初始化失败");
-      row=u.data&&u.data[0];
-    }
-    this.rev=row.rev||1;this.remoteData=row.data||{};this.remoteAt=row.updated_at||0;this.remoteBy=row.by||"";
-    this.setMeta({rev:this.rev,at:this.remoteAt,by:this.remoteBy});
-    this.applyRemote(row,true);
-  },
-  startPolling:function(){var self=this;try{clearInterval(this.pollTimer);}catch(e){}this.pollTimer=setInterval(function(){self.pull();},3000);},
+  startPolling:function(){var self=this;try{clearInterval(this.pollTimer);}catch(e){}this.pollTimer=setInterval(function(){self.pull();},5000);},
   stopPolling:function(){try{clearInterval(this.pollTimer);}catch(e){}this.pollTimer=null;},
   bindFocus:function(){
     if(this._bound)return;this._bound=true;var self=this;
@@ -270,16 +310,18 @@ var CS={
     window.addEventListener("pageshow",function(){self.pull();});
   },
   async pull(){
-    if(!this.online||this.pulling||this.applying||!this.rdb)return;
+    if(!this.online||this.pulling||this.applying)return;
     this.pulling=true;
     try{
-      var row=await this.fetchRow();
-      if(row){
+      var g=await this.ghGetGist(true);
+      if(g.status===200){
+        this.etag=g.etag;var row=g.row;
         if((row.rev||0)>(this.rev||0)){this.applyRemote(row,false);}
         else{this.remoteData=row.data||this.remoteData;}
       }
-    }catch(e){/* 瞬时网络错误，下一轮自动重试，不降级为离线 */}
-    finally{this.pulling=false;}
+    }catch(e){
+      if(this.online)this.setStatus("wait","☁️ 同步重试…");
+    }finally{this.pulling=false;}
   },
   applyRemote:function(row,boot){
     if(!row)return;
@@ -299,24 +341,27 @@ var CS={
     this.setStatus("on","☁️ 云已同步");this.renderPanel();
   },
   schedulePush:function(){
-    if(!this.online||this.applying)return;
+    if(!this.online)return;
     var self=this;
     clearTimeout(this.pushTimer);
-    this.pushTimer=setTimeout(function(){self.pushNow();},1500);
+    this.pushTimer=setTimeout(function(){ if(self.applying){self.schedulePush();}else{self.pushNow();} },1500);
   },
   async pushNow(){
-    if(!this.online||!this.rdb||this.applying)return;
-    var self=this;
+    if(!this.online)return;
+    if(this.applying){this.schedulePush();return;}
     var local=this.collect();
     try{
       var done=false;
-      for(var attempt=0;attempt<3&&!done;attempt++){
-        var base=await this.fetchRow();
+      for(var attempt=0;attempt<5&&!done;attempt++){
+        var base=null;
+        try{
+          var g0=await this.ghGetGist(false);
+          if(g0.status===200){base=g0.row;this.etag=g0.etag;}
+        }catch(e){ if(String(e&&e.message).indexOf("404")===-1) throw e; base=null; }
         if(!base){
-          var ins0={id:CLOUD_ROW,rev:1,updated_at:Date.now(),by:this.deviceName(),data:local};
-          var u0=await this.rdb.from(CLOUD_TABLE).upsert(ins0).select();
-          if(u0&&u0.error)throw new Error(u0.error.message||"云端写入失败");
-          this.rev=1;this.remoteData=local;this.remoteAt=ins0.updated_at;this.remoteBy=ins0.by;done=true;break;
+          var initRow={id:CLOUD_ROW,rev:1,updated_at:Date.now(),by:this.deviceName(),data:local};
+          var c0=await this.ghCreateGist(initRow);
+          this.gistId=c0.id;this.etag=c0.etag;this.rev=1;this.remoteData=local;done=true;break;
         }
         var baseRev=base.rev||1;
         var merged=Object.assign({},base.data||{});
@@ -326,20 +371,20 @@ var CS={
           if(!rv||lt>=rt)merged[k]=lv;
         });
         var newRev=baseRev+1,now=Date.now(),by=this.deviceName();
-        var upd=await this.rdb.from(CLOUD_TABLE)
-          .update({rev:newRev,updated_at:now,by:by,data:merged})
-          .eq("id",CLOUD_ROW).eq("rev",baseRev).select();
-        if(upd&&upd.error)throw new Error(upd.error.message||"云端写入失败");
-        if(upd.data&&upd.data.length){
-          this.rev=newRev;this.remoteData=merged;this.remoteAt=now;this.remoteBy=by;done=true;
-        }else{
-          await this.pull();  // rev 冲突，先拉远端最新再重试合并
+        var row={id:CLOUD_ROW,rev:newRev,updated_at:now,by:by,data:merged};
+        var w=await this.ghPatchGist(row);
+        this.etag=w.etag;
+        var v2=await this.ghGetGist(false);
+        if(v2.status===200){
+          this.etag=v2.etag;
+          if((v2.row.rev||0)===newRev){this.rev=newRev;this.remoteData=merged;this.remoteAt=now;this.remoteBy=by;done=true;}
         }
       }
       this.setMeta({rev:this.rev,at:this.remoteAt,by:this.remoteBy});
       this.setStatus("on","☁️ 云已同步");this.renderPanel();
     }catch(e){
       console.warn("云同步上行失败",e);
+      this.lastError=String((e&&e.message)||e);
       this.setStatus("wait","☁️ 同步重试…");this.renderPanel();
       setTimeout(function(){if(CS.online)CS.pushNow();},4000);
     }
@@ -360,6 +405,12 @@ var CS={
       try{if(typeof weatherData!=="undefined"&&weatherData)runAnalysis();}catch(e){}
     }catch(e){console.warn("云数据刷新异常",e);}
   },
+  copyInvite:function(){
+    var id=this.gistId||this.cfg().gistId;
+    if(!id){this.csToast("尚未创建工作区");return;}
+    var txt="冰水群控平台·云同步加入方式：\n1) 打开“设置→☁️云同步”，GitHub Token 填入【同一个有 gist 权限的 Token】；\n2) 工作区ID 填："+id+"\n3) 点“连接云端工作区”，即进入同一云端工作区。";
+    csCopy(txt);
+  },
   renderPanel:function(){
     var row=document.getElementById("csRow"),form=document.getElementById("csForm");
     if(!row||!form)return;
@@ -370,25 +421,37 @@ var CS={
     setCsText("csAt",this.remoteAt?csFmt(this.remoteAt):(m.at?csFmt(m.at):"尚未同步"));
     setCsText("csBy",this.remoteBy||m.by||"–");
     setCsText("csRev",this.rev||m.rev||0);
-    var w=document.getElementById("csEnvWarn");if(w){if(!CLOUD_ENV_ID){w.textContent="云端环境尚未配置（缺少环境 ID），实时同步不可用，当前仅本机存储。请联系管理员在程序中填入云开发环境 ID 并部署。";w.style.display="block";}else if(!this.online){var host=location.hostname||"当前域名";w.innerHTML="当前访问域名 <b>"+host+"</b> 未加入云开发 Web 安全域名，实时同步暂不可用，已自动切换本机存储（其余功能正常）。管理员请在【CloudBase 控制台 → 身份认证 → 安全配置 → Web 安全域名】中添加：<b>"+host+"</b>，保存后约 1–2 分钟生效，刷新即恢复云端同步。";w.style.display="block";}else{w.style.display="none";}}
-    var hint=document.getElementById("csAnonHint");
-    if(hint)hint.style.display=(this.online||!this.needAnon)?"none":"block";
+    setCsText("csGistId",this.gistId||this.cfg().gistId||"–");
+    var ti=document.getElementById("csGhToken"),gid=document.getElementById("csGhGist"),c=this.cfg();
+    if(ti&&!ti.value)ti.value=c.token||"";
+    if(gid&&!gid.value)gid.value=c.gistId||"";
+    var w=document.getElementById("csEnvWarn");
+    if(w){
+      if(!this.online&&this.lastError){w.textContent="⚠️ "+this.lastError;w.style.display="block";}
+      else{w.style.display="none";}
+    }
     var btn=document.getElementById("csLoginBtn");
-    if(btn){btn.disabled=!!this.connecting;btn.textContent=this.connecting?"连接中…":"连接云端工作区";}
+    if(btn){btn.disabled=!!this.connecting;btn.textContent=this.connecting?"连接中…":(this.cfg().gistId?"连接云端工作区":"创建并连接工作区");}
   },
   autoStart:function(){
     this.deviceName();
     if(!document.getElementById("serverBadge"))return;
     this.renderPanel();
-    if(!CLOUD_ENV_ID){this.setStatus("off","💾 本机存储");return;}
-    var self=this;
-    this.login().catch(function(e){
-      self.setStatus("off","💾 本机存储");
-      console.warn("云自动连接失败",e);
-    });
+    var c=this.cfg();
+    if(c.token&&c.gistId){
+      var self=this;
+      this.login().catch(function(e){self.setStatus("off","💾 本机存储");console.warn("云自动连接失败",e);});
+    }else{this.setStatus("off","💾 本机存储");}
   }
 };
+
 function setCsText(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
+function csCopy(txt){
+  function fb(){var ta=document.createElement("textarea");ta.value=txt;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.focus();ta.select();var ok=false;try{ok=document.execCommand("copy");}catch(e){}document.body.removeChild(ta);if(ok)CS.csToast("已复制加入指引（含工作区ID，不含Token）");else CS.csToast("复制失败，请手动复制工作区ID");}
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(function(){CS.csToast("已复制加入指引（含工作区ID，不含Token）");},fb);}else fb();
+  }catch(e){fb();}
+}
 function csFmt(t){var d=new Date(t),z=function(x){return String(x).padStart(2,"0")};return d.getFullYear()+"-"+z(d.getMonth()+1)+"-"+z(d.getDate())+" "+z(d.getHours())+":"+z(d.getMinutes())+":"+z(d.getSeconds());}
 function cloudLoginSubmit(){
   CS.login().then(function(){CS.renderPanel();})
@@ -404,12 +467,15 @@ function openCloudTab(){
 (function(){
   var orig=Storage.prototype.setItem;
   Storage.prototype.setItem=function(k,v){
+    if(CLOUD_SYNC_KEYS.indexOf(k)>=0&&!CS.applying){
+      try{var o=JSON.parse(v);if(o&&typeof o==="object"&&!Array.isArray(o)){o.ts=Date.now();v=JSON.stringify(o);}}catch(e){}
+    }
     orig.call(this,k,v);
     try{if(window.CS&&CS.online&&!CS.applying&&CLOUD_SYNC_KEYS.indexOf(k)>=0)CS.schedulePush();}catch(e){}
   };
 })();
 
-function init(){initTheme();let a=document.getElementById("province");Object.keys(PROVINCE_CITIES).forEach(e=>{var t=document.createElement("option");t.value=e,t.textContent=e,a.appendChild(t)}),a.addEventListener("change",onProvinceChange),document.getElementById("city").addEventListener("change",onCityChange),initAuth();if(window.__scanLanding)return;restoreOnStart(),renderParamPanel(),updateSaveStatus(),initTheme(),initHistoryMonths(),renderRuleLib();var e=document.getElementById("aiAutoSwitch"),e=(e&&e.classList.toggle("on",_aiAuto),document.getElementById("aiEvalTwb"));e&&(e.textContent=currentEvalTwb().toFixed(1)),refreshAiBiasText(),BK.init(),window.CS&&CS.autoStart(),loadTechLib(),renderActualPanel(),initAiSettings(),updateAiCardState(),initCardCollapse(),restoreAddress(),initImport()}function onProvinceChange(){let e=document.getElementById("province").value,a=document.getElementById("city"),t=document.getElementById("district");a.innerHTML='<option value="">请选择市</option>',t.innerHTML='<option value="">请先选择市</option>',e&&PROVINCE_CITIES[e]&&PROVINCE_CITIES[e].forEach(e=>{var t=document.createElement("option");t.value=e,t.textContent=e,a.appendChild(t)}),saveAddress()}function onCityChange(){let e=document.getElementById("province").value,t=document.getElementById("city").value,a=document.getElementById("district");a.innerHTML="";var r=document.createElement("option");r.value="全市",r.textContent="全市（市级天气）",r.selected=!0,a.appendChild(r),e&&t&&REGION_DATA[e]&&REGION_DATA[e][t]&&REGION_DATA[e][t].forEach(e=>{var t=document.createElement("option");t.value=e,t.textContent=e,a.appendChild(t)}),saveAddress()}let ADDR_KEY="hvacAddress";function saveAddress(){try{localStorage.setItem(ADDR_KEY,JSON.stringify({province:document.getElementById("province").value,city:document.getElementById("city").value,district:document.getElementById("district").value}))}catch(e){}}function restoreAddress(){try{var e=JSON.parse(localStorage.getItem(ADDR_KEY));e&&e.province&&(document.getElementById("province").value=e.province,onProvinceChange(),e.city)&&(document.getElementById("city").value=e.city,onCityChange(),e.district&&(document.getElementById("district").value=e.district),saveAddress())}catch(e){}}let OPT_HINT={};function applyOptHints(){document.querySelectorAll(".opt-hint").forEach(e=>{var t,a=e.getAttribute("data-oid"),r=OPT_HINT[a],a=document.getElementById(a);!r||!a||""===(a=a.value)||Math.abs(parseFloat(a)-parseFloat(r.rec))<.01?e.innerHTML="":(t='<span class="oh-arrow">→</span>',"cau"===r.mode?e.innerHTML=`<span class="oh-cur">当前${a}${r.unit}</span>${t}<span class="oh-cau">理论${r.rec}${r.unit}·建议维持</span>`:e.innerHTML=`<span class="oh-cur">当前${a}${r.unit}</span>${t}<span class="oh-rec">推荐${r.rec}${r.unit}</span>`)})}function renderParamPanel(){var e=document.getElementById("paramPanel");let t="";var a,r=SYSTEM.loadAdjust,r=(t+=`<div class="equip-section" id="sec-load"><div class="equip-section-header" onclick="toggleSection('sec-load')"><span class="title">📊 系统总制冷量（负荷设定）</span><span class="spec" id="spec-load">${"auto"===r.mode?"自动(湿球温度核算)":"手动设定"} · ${"manual"===r.mode?r.manual.toFixed(0)+" kW":"基于气象数据"}</span><span class="toggle">▼</span></div><div class="equip-section-body"><div class="param-row"><div class="param-group"><label>制冷量模式</label><select id="load_mode" onchange="toggleLoadMode()"><option value="auto" ${"auto"===r.mode?"selected":""}>自动(湿球温度核算)</option><option value="manual" ${"manual"===r.mode?"selected":""}>手动设定</option></select></div>${numInput("手动总制冷量","load_manual",r.manual,1e3,2e5,"kW",!1,"auto"===r.mode?"disabled":"")}<div class="param-group"><label>当前总运行容量</label><div style="padding:6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:2px;font-size:13px;font-weight:700;color:var(--purple)" id="rt_totalCap">-- kW</div></div><div class="param-group"><label>当前系统负荷率</label><div style="padding:6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:2px;font-size:13px;font-weight:700;color:var(--accent)" id="rt_loadRatio">-- %</div></div></div><div class="param-row" style="margin-top:8px;border-top:1px dashed var(--border);padding-top:10px"><div style="grid-column:1/-1;font-size:11px;color:var(--text-light);font-weight:700">🏭 工艺负荷偏移系数（应对半导体工艺突发负荷波动）</div>
+function init(){initTheme();let a=document.getElementById("province");Object.keys(PROVINCE_CITIES).forEach(e=>{var t=document.createElement("option");t.value=e,t.textContent=e,a.appendChild(t)}),a.addEventListener("change",function(){onProvinceChange();}),document.getElementById("city").addEventListener("change",function(){onCityChange();}),document.getElementById("district").addEventListener("change",saveAddress),initAuth();if(window.__scanLanding)return;restoreOnStart(),renderParamPanel(),updateSaveStatus(),initTheme(),initHistoryMonths(),renderRuleLib();var e=document.getElementById("aiAutoSwitch"),e=(e&&e.classList.toggle("on",_aiAuto),document.getElementById("aiEvalTwb"));e&&(e.textContent=currentEvalTwb().toFixed(1)),refreshAiBiasText(),BK.init(),window.CS&&CS.autoStart(),loadTechLib(),renderActualPanel(),initAiSettings(),updateAiCardState(),initCardCollapse(),restoreAddress(),initImport()}function onProvinceChange(silent){let e=document.getElementById("province").value,a=document.getElementById("city"),t=document.getElementById("district");a.innerHTML='<option value="">请选择市</option>',t.innerHTML='<option value="">请先选择市</option>',e&&PROVINCE_CITIES[e]&&PROVINCE_CITIES[e].forEach(e=>{var t=document.createElement("option");t.value=e,t.textContent=e,a.appendChild(t)}),silent||saveAddress()}function onCityChange(silent){let e=document.getElementById("province").value,t=document.getElementById("city").value,a=document.getElementById("district");a.innerHTML="";var r=document.createElement("option");r.value="全市",r.textContent="全市（市级天气）",r.selected=!0,a.appendChild(r),e&&t&&REGION_DATA[e]&&REGION_DATA[e][t]&&REGION_DATA[e][t].forEach(e=>{var t=document.createElement("option");t.value=e,t.textContent=e,a.appendChild(t)}),silent||saveAddress()}let ADDR_KEY="hvacAddress";function saveAddress(){try{localStorage.setItem(ADDR_KEY,JSON.stringify({province:document.getElementById("province").value,city:document.getElementById("city").value,district:document.getElementById("district").value}))}catch(e){}}function restoreAddress(){try{var e=JSON.parse(localStorage.getItem(ADDR_KEY));if(!e||!e.province)return;var p=document.getElementById("province"),c=document.getElementById("city"),d=document.getElementById("district");p.value=e.province;onProvinceChange(true);if(e.city){c.value=e.city;onCityChange(true);if(e.district){var has=Array.prototype.some.call(d.options,function(o){return o.value===e.district;});if(!has){var op=document.createElement("option");op.value=e.district;op.textContent=e.district;d.appendChild(op);}d.value=e.district;}}}catch(e){}}let OPT_HINT={};function applyOptHints(){document.querySelectorAll(".opt-hint").forEach(e=>{var t,a=e.getAttribute("data-oid"),r=OPT_HINT[a],a=document.getElementById(a);!r||!a||""===(a=a.value)||Math.abs(parseFloat(a)-parseFloat(r.rec))<.01?e.innerHTML="":(t='<span class="oh-arrow">→</span>',"cau"===r.mode?e.innerHTML=`<span class="oh-cur">当前${a}${r.unit}</span>${t}<span class="oh-cau">理论${r.rec}${r.unit}·建议维持</span>`:e.innerHTML=`<span class="oh-cur">当前${a}${r.unit}</span>${t}<span class="oh-rec">推荐${r.rec}${r.unit}</span>`)})}function renderParamPanel(){var e=document.getElementById("paramPanel");let t="";var a,r=SYSTEM.loadAdjust,r=(t+=`<div class="equip-section" id="sec-load"><div class="equip-section-header" onclick="toggleSection('sec-load')"><span class="title">📊 系统总制冷量（负荷设定）</span><span class="spec" id="spec-load">${"auto"===r.mode?"自动(湿球温度核算)":"手动设定"} · ${"manual"===r.mode?r.manual.toFixed(0)+" kW":"基于气象数据"}</span><span class="toggle">▼</span></div><div class="equip-section-body"><div class="param-row"><div class="param-group"><label>制冷量模式</label><select id="load_mode" onchange="toggleLoadMode()"><option value="auto" ${"auto"===r.mode?"selected":""}>自动(湿球温度核算)</option><option value="manual" ${"manual"===r.mode?"selected":""}>手动设定</option></select></div>${numInput("手动总制冷量","load_manual",r.manual,1e3,2e5,"kW",!1,"auto"===r.mode?"disabled":"")}<div class="param-group"><label>当前总运行容量</label><div style="padding:6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:2px;font-size:13px;font-weight:700;color:var(--purple)" id="rt_totalCap">-- kW</div></div><div class="param-group"><label>当前系统负荷率</label><div style="padding:6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:2px;font-size:13px;font-weight:700;color:var(--accent)" id="rt_loadRatio">-- %</div></div></div><div class="param-row" style="margin-top:8px;border-top:1px dashed var(--border);padding-top:10px"><div style="grid-column:1/-1;font-size:11px;color:var(--text-light);font-weight:700">🏭 工艺负荷偏移系数（应对半导体工艺突发负荷波动）</div>
 ${numInput("工艺负荷偏移","process_offset",SYSTEM.processOffset.value,.7,1.4,"×",!1,"",.05)}
 <div style="grid-column:1/-1;font-size:10px;color:var(--text3);padding:0 4px">当前 <span id="spec-procOffset">${SYSTEM.processOffset.value.toFixed(2)}</span>× — 工艺生产负荷突增时上调（如1.2×），工艺减产时下调（如0.8×），直接放大/缩小建筑冷负荷模型预测值。偏差>60%的实测日可标记异常剔除后再用此系数微调。</div></div><div style="grid-column:1/-1;font-size:11px;color:var(--text-light);font-weight:700">🕓 机组老化衰减（设备已投运年限，厂家曲线为新机基准）</div>
 ${numInput("投运年限","aging_years",SYSTEM.aging.years,0,30,"年",!1,"",1)}
