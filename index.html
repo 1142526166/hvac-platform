@@ -730,7 +730,7 @@ function aiHttpError(st,et){
 async function aiChatStream(c,messages,opts){
   opts=opts||{};
   var base=(c.base||'').replace(/\/+$/,'');
-  var payload={model:c.model,messages:messages,max_tokens:opts.maxTokens||3800,temperature:0.3,stream:true};
+  var payload={model:c.model,messages:messages,max_tokens:opts.maxTokens||3800,temperature:0.3,stream:true};if(opts.jsonMode)payload.response_format={type:'json_object'};
   var urls=[base+'/chat/completions'];if(!/\/v\d+$/.test(base))urls.push(base+'/v1/chat/completions');
   var lastErr=null;
   for(var ui=0;ui<urls.length;ui++){
@@ -739,6 +739,10 @@ async function aiChatStream(c,messages,opts){
     resetIdle(45000);
     try{
       var resp=await fetch(urls[ui],{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+c.key},body:JSON.stringify(payload),signal:ctrl.signal});
+      if((!resp.ok)&&resp.status===400&&payload.response_format){
+        delete payload.response_format;resetIdle(45000);
+        resp=await fetch(urls[ui],{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+c.key},body:JSON.stringify(payload),signal:ctrl.signal});
+      }
       if(!resp.ok){
         var et='';try{var j=await resp.json();et=(j.error&&(j.error.message||j.error.code))||j.message||'';}catch(_){}
         clearTimeout(idle);
@@ -1034,16 +1038,68 @@ function aiSheetTsv(sheet){
 function aiExtractJson(txt){
   txt=String(txt==null?'':txt).trim();
   txt=txt.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'').trim();
-  var s=txt.indexOf('{'),z=txt.lastIndexOf('}');
-  if(s<0||z<=s)throw new Error('AI 未返回可识别的 JSON 结构');
-  return JSON.parse(txt.slice(s,z+1));
+  var s=txt.indexOf('{');
+  if(s<0)throw new Error('AI 未返回可识别的 JSON 结构');
+  var z=txt.lastIndexOf('}');
+  var body=(z>s)?txt.slice(s,z+1):txt.slice(s);   // 无任何 }（被截断）也取到末尾，交给补全
+  var clean=body.replace(/,\s*([}\]])/g,'$1');           // 去尾随逗号
+  var cands=[clean,aiRepairJson(clean,false),aiRepairJson(clean,true)];
+  var lastErr=null;
+  for(var k=0;k<cands.length;k++){try{return JSON.parse(cands[k]);}catch(e){lastErr=e;}}
+  throw new Error('AI 返回内容不是合法 JSON（可能被截断）：'+(lastErr?lastErr.message:'解析失败'));
+}
+function aiRepairJson(s,dropTail){
+  if(dropTail){s=s.replace(/\s*(?:"[^"]*"|true|false|null|-?\d+(?:\.\d+)?)\s*$/,'');s=s.replace(/,\s*$/,'');}
+  var stack=[],inStr=false,esc=false,ch,i;
+  for(i=0;i<s.length;i++){ch=s[i];
+    if(inStr){if(esc)esc=false;else if(ch==='\\')esc=true;else if(ch==='"')inStr=false;continue;}
+    if(ch==='"')inStr=true;else if(ch==='{'||ch==='[')stack.push(ch);else if(ch==='}'||ch===']'){if(stack.length)stack.pop();}
+  }
+  if(inStr)s+='"';
+  s=s.replace(/[,:]\s*$/,'');
+  stack=[];inStr=false;esc=false;
+  for(i=0;i<s.length;i++){ch=s[i];
+    if(inStr){if(esc)esc=false;else if(ch==='\\')esc=true;else if(ch==='"')inStr=false;continue;}
+    if(ch==='"')inStr=true;else if(ch==='{'||ch==='[')stack.push(ch);else if(ch==='}'||ch===']'){if(stack.length)stack.pop();}
+  }
+  while(stack.length){var o=stack.pop();s+=(o==='{'?'}':']');}
+  return s;
 }
 async function aiRecognizeSheet(file,sheet){
   var c=aiCfg();
-  var sys='你是资深能源数据工程师，擅长解析任意版式的建筑/工厂能耗 Excel：横向日期、纵向部门、多级表头、合并单元格都能正确理解。\n请理解下面的表格并抽取为标准化数据。\n【只输出一个 JSON 对象，不要输出任何解释，不要使用 markdown 代码块】。JSON 结构：\n{\n  "kind": "energy|weather|mixed|spec|unknown",\n  "year": 2026,\n  "month": 9,\n  "daily": [ {"date":"YYYY-MM-DD","totalKwh":0,"breakdown":{"分项名":0}} ],\n  "weather": [ {"date":"YYYY-MM-DD","dry":0,"wet":0,"rh":0,"dew":0} ],\n  "summary": "一句话说明这是什么表、数据口径"\n}\n规则：\n- 日期依据表头（如“9月-1日”“1日”）结合 year/month 补全为 YYYY-MM-DD；年份不确定用当前年。\n- totalKwh 优先取该日“合计/总计/总用电/动力照明总柜/总表”等行；若无明确合计行，则对该日所有用电/耗电部门数值求和，排除水量、面积、金额、台数等非电量行。\n- breakdown 保留主要分项（冷机/冷却塔/水泵/MAU/照明等），数值必须来自表格。\n- 只使用表格中真实出现的数字，缺失填 null，严禁编造。';
+  var sys='你是资深能源数据工程师，擅长解析任意版式的建筑/工厂能耗 Excel：横向日期、纵向部门、多级表头、合并单元格都能正确理解。\n请理解下面表格并抽取数据，只输出一个 JSON 对象（已启用 JSON 模式），结构尽量紧凑：\n{\n "kind":"energy|weather|mixed|spec|unknown",\n "year":2026,"month":9,\n "daily":[ ["MM-DD",当日总电量,{"分项":电量}] ],\n "weather":[ ["MM-DD",干球,湿球,相对湿度,露点] ],\n "summary":"一句话说明表的口径"\n}\n严格规则：\n1) 所有数字一律纯数字，禁止千分位逗号、单位或文字；没有就填 null；不要尾随逗号。\n2) 日期按表头（如“9月-1日”“1日”）补全，MM-DD 月、日各两位；年份取 year，不确定用当前年。\n3) daily 当日总电量优先取“合计/总计/总用电/动力照明总柜/总表”行；无合计行则对该日所有用电/耗电部门求和，排除水量、面积、金额、台数等非电量行（如“冷却塔补水”是水量，不计入）。\n4) daily 第3项 breakdown 可选，最多保留4个最主要分项（冷机/冷却塔/水泵/MAU/照明），数值必须来自表格；无法可靠拆分就给 null，不要硬凑。\n5) weather 顺序固定为 [干球,湿球,相对湿度,露点]，缺项填 null。\n6) 只使用表格中真实出现的数字，严禁编造。';
   var usr='工作表名：'+sheet.name+'（来自文件 '+file+'）\n下面表格以制表符分隔列、换行分隔行，空白即空单元格'+(((sheet.aoa||[]).filter(function(r){return r&&r.some(function(v){return String(v==null?'':v).trim()!=='';});}).length>160)?'（仅前160行）':'')+'：\n'+aiSheetTsv(sheet);
-  var txt=await aiChatStream(c,[{role:'system',content:sys},{role:'user',content:usr}],{maxTokens:3600});
-  return aiExtractJson(txt);
+  var txt=await aiChatStream(c,[{role:'system',content:sys},{role:'user',content:usr}],{maxTokens:8000,jsonMode:true});
+  return aiNormalizeSheet(aiExtractJson(txt));
+}
+function aiMmdd(y,mmdd){
+  if(mmdd==null)return null;
+  var m=String(mmdd).trim().match(/^(\d{1,2})[-/.](\d{1,2})$/);
+  return m?(y+'-'+('0'+m[1]).slice(-2)+'-'+('0'+m[2]).slice(-2)):null;
+}
+function aiNum(v){
+  if(v==null||v===''||typeof v==='boolean')return null;
+  var n=+String(v).replace(/[,，\s]/g,'');
+  return isFinite(n)?n:null;
+}
+function aiNormalizeSheet(j){
+  var y=j.year||new Date().getFullYear(),daily=[],weather=[];
+  function dateOf(x){return (x&&/^\d{4}-\d{2}-\d{2}$/.test(x))?x:aiMmdd(y,x);}
+  (j.daily||[]).forEach(function(d){
+    var date,total,bd=null;
+    if(Array.isArray(d)){date=dateOf(d[0]);total=aiNum(d[1]);bd=d[2];}
+    else if(d&&typeof d==='object'){date=dateOf(d.date);total=aiNum(d.totalKwh);bd=d.breakdown;}
+    if(date&&total!=null){var o={date:date,totalKwh:total};
+      if(bd&&typeof bd==='object'){var nb={};Object.keys(bd).forEach(function(k){var n=aiNum(bd[k]);if(n!=null)nb[k]=n;});if(Object.keys(nb).length)o.breakdown=nb;}
+      daily.push(o);}
+  });
+  (j.weather||[]).forEach(function(w){
+    var date,o=null;
+    if(Array.isArray(w)){date=dateOf(w[0]);o={dry:aiNum(w[1]),wet:aiNum(w[2]),rh:aiNum(w[3]),dew:aiNum(w[4])};}
+    else if(w&&typeof w==='object'){date=dateOf(w.date);o={dry:aiNum(w.dry),wet:aiNum(w.wet),rh:aiNum(w.rh),dew:aiNum(w.dew)};}
+    if(date&&o)weather.push(Object.assign({date:date},o));
+  });
+  return {kind:j.kind||'unknown',summary:j.summary||'',daily:daily,weather:weather};
 }
 async function aiRecognizeImports(){
   if(!aiReady()){alert('尚未配置可用的 AI 接口（API Key）。请先在「AI 节能诊断」页或 AI 设置中填写服务商 / 接口地址 / 模型 / API Key，保存后再用 AI 识别。');return;}
