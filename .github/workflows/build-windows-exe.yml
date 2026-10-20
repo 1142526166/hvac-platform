@@ -1,0 +1,47 @@
+name: build-windows-exe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "desktop_app/**"
+      - "index.html"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r desktop_app/requirements.txt
+
+      - name: Copy index.html into app folder
+        run: |
+          copy index.html desktop_app\index.html
+
+      - name: Build exe with PyInstaller
+        working-directory: desktop_app
+        run: |
+          pyinstaller --noconfirm --clean --windowed --onefile ^
+            --name "HVAC-Platform" ^
+            --add-data "index.html;." ^
+            app.py
+
+      - name: List artifacts
+        run: |
+          dir desktop_app\dist
+
+      - name: Upload exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: HVAC-Platform-Windows-x64
+          path: desktop_app/dist/*.exe
+          retention-days: 30
