@@ -11,6 +11,9 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: cmd
     steps:
       - uses: actions/checkout@v4
 
@@ -24,20 +27,14 @@ jobs:
           pip install -r desktop_app/requirements.txt
 
       - name: Copy index.html into app folder
-        run: |
-          copy index.html desktop_app\index.html
+        run: copy index.html desktop_app\index.html
 
       - name: Build exe with PyInstaller
         working-directory: desktop_app
-        run: |
-          pyinstaller --noconfirm --clean --windowed --onefile ^
-            --name "HVAC-Platform" ^
-            --add-data "index.html;." ^
-            app.py
+        run: pyinstaller --noconfirm --clean --windowed --onefile --name HVAC-Platform --add-data "index.html;." app.py
 
       - name: List artifacts
-        run: |
-          dir desktop_app\dist
+        run: dir desktop_app\dist
 
       - name: Upload exe
         uses: actions/upload-artifact@v4
